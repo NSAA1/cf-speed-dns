@@ -11,6 +11,8 @@ CF_DNS_NAME     =   os.environ["CF_DNS_NAME"]
 
 # pushplus_token
 PUSHPLUS_TOKEN  =   os.environ["PUSHPLUS_TOKEN"]
+TELEGRAM_BOT_TOKEN  =   os.environ["TELEGRAM_BOT_TOKEN"]
+TELEGRAM_CHAT_ID  =   os.environ["TELEGRAM_CHAT_ID"]
 
 
 
@@ -69,33 +71,36 @@ def update_dns_record(record_id, name, cf_ip):
         return "ip:" + str(cf_ip) + "解析" + str(name) + "失败"
 
 # 消息推送
-def push_plus(content):
-    url = 'http://www.pushplus.plus/send'
+def send_telegram_message(content):
+    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
     data = {
-        "token": PUSHPLUS_TOKEN,
-        "title": "IP优选DNSCF推送",
-        "content": content,
-        "template": "markdown",
-        "channel": "wechat"
+        'chat_id': TELEGRAM_CHAT_ID,
+        'text': f"🌐 IP优选DNS更新通知\n\n{content}",
+        'parse_mode': 'HTML'
     }
-    body = json.dumps(data).encode(encoding='utf-8')
-    headers = {'Content-Type': 'application/json'}
-    requests.post(url, data=body, headers=headers)
+    
+    try:
+        response = requests.post(url, json=data, timeout=10)
+        if response.status_code == 200:
+            print("✅ Telegram 通知发送成功")
+        else:
+            print(f"❌ Telegram 通知发送失败: {response.text}")
+    except Exception as e:
+        print(f"❌ Telegram 通知异常: {e}")
 
 # 主函数
 def main():
     # 获取最新优选IP
     ip_addresses_str = get_cf_speed_test_ip()
     ip_addresses = ip_addresses_str.split(',')
-    dns_records = get_dns_records(CF_DNS_NAME)
-    push_plus_content = []
-    # 遍历 IP 地址列表
-    for index, ip_address in enumerate(ip_addresses):
-        # 执行 DNS 变更
-        dns = update_dns_record(dns_records[index], CF_DNS_NAME, ip_address)
-        push_plus_content.append(dns)
+    dns_records = get_dns_records(CF_DNS_NAME)[:2]
+    send_telegram_message_content = []
+    update_count = min(len(ip_addresses), len(dns_records))
+    for i in range(update_count):
+        dns = update_dns_record(dns_records[i], CF_DNS_NAME, ip_addresses[i])
+        send_telegram_message_content.append(dns)
 
-    push_plus('\n'.join(push_plus_content))
+    send_telegram_message('\n'.join(send_telegram_message_content))
 
 if __name__ == '__main__':
     main()
