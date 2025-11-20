@@ -93,7 +93,7 @@ def main():
     # 获取最新优选IP
     ip_addresses_str = get_cf_speed_test_ip()
     ip_addresses = ip_addresses_str.split(',')
-    dns_records = get_dns_records(CF_DNS_NAME)[:2]
+    dns_records = get_dns_records(CF_DNS_NAME)[:3]
     send_telegram_message_content = []
     update_count = min(len(ip_addresses), len(dns_records))
     for i in range(update_count):
