@@ -88,6 +88,53 @@ def send_telegram_message(content):
     except Exception as e:
         print(f"❌ Telegram 通知异常: {e}")
 
+def main():
+    print("🚀 开始执行 DNS 更新任务")
+    
+    # 获取最新优选IP
+    ip_addresses_str = get_cf_speed_test_ip()
+    if not ip_addresses_str:
+        print("❌ 获取 IP 失败")
+        return
+    
+    ip_addresses = ip_addresses_str.split(',')
+    ip_addresses = [ip.strip() for ip in ip_addresses if ip.strip()]
+    
+    print(f"\n📊 获取到 {len(ip_addresses)} 个优选 IP:")
+    for idx, ip in enumerate(ip_addresses):
+        print(f"   [{idx}] {ip}")
+    
+    # 获取 DNS 记录
+    all_dns_records = get_dns_records(CF_DNS_NAME)
+    print(f"\n📡 Cloudflare 上共有 {len(all_dns_records)} 个 DNS 记录")
+    
+    # 切片取前3个
+    dns_records = all_dns_records[:3]
+    print(f"✂️ 切片后只保留前 {len(dns_records)} 个记录进行更新")
+    print(f"   记录 ID: {dns_records}")
+    
+    # 计算更新数量
+    update_count = min(len(ip_addresses), len(dns_records))
+    print(f"\n🔢 实际将更新 {update_count} 条记录")
+    print(f"   (IP数量: {len(ip_addresses)}, DNS记录数量: {len(dns_records)})")
+    
+    send_telegram_message_content = []
+    
+    print(f"\n🔄 开始更新循环:")
+    for i in range(update_count):
+        print(f"\n   [{i+1}/{update_count}] 更新记录 {dns_records[i]} → {ip_addresses[i]}")
+        dns = update_dns_record(dns_records[i], CF_DNS_NAME, ip_addresses[i])
+        send_telegram_message_content.append(dns)
+    
+    print(f"\n✅ 循环结束，共执行了 {update_count} 次更新")
+    print("=" * 50)
+    
+    # 发送通知
+    summary = f"📊 更新统计：成功 {update_count} 条"
+    send_telegram_message('\n'.join(send_telegram_message_content) + f"\n\n{summary}")
+    
+    print("📱 Telegram 通知已发送")
+'''
 # 主函数
 def main():
     # 获取最新优选IP
@@ -101,6 +148,6 @@ def main():
         send_telegram_message_content.append(dns)
 
     send_telegram_message('\n'.join(send_telegram_message_content))
-
+'''
 if __name__ == '__main__':
     main()
