@@ -11,8 +11,8 @@ CF_DNS_NAME     =   os.environ["CF_DNS_NAME"]
 #在 Cloudflare 后台给DNS记录填写的备注关键词
 CF_DNS_COMMENT  =   "auto" 
 
-# pushplus_token
-PUSHPLUS_TOKEN  =   os.environ["PUSHPLUS_TOKEN"]
+# notice
+#PUSHPLUS_TOKEN  =   os.environ["PUSHPLUS_TOKEN"]
 TELEGRAM_BOT_TOKEN  =   os.environ["TELEGRAM_BOT_TOKEN"]
 TELEGRAM_CHAT_ID  =   os.environ["TELEGRAM_CHAT_ID"]
 
@@ -24,7 +24,7 @@ headers = {
 def get_cf_speed_test_ip(timeout=10, max_retries=5):
     for attempt in range(max_retries):
         try:
-            response = requests.get('https://ip.164746.xyz/ipTop.html', timeout=timeout)
+            response = requests.get('https://ip.164746.xyz/ipTop10.html', timeout=timeout)
             if response.status_code == 200:
                 return response.text
         except Exception as e:
@@ -41,9 +41,7 @@ def get_dns_records(name):
     if response.status_code == 200:
         records = response.json()['result']
         for record in records:
-            # 1. 匹配域名
-            # 2. 匹配类型为 A 记录
-            # 3. 【关键】匹配备注(Comment)中包含特定关键词
+            # 匹配域名 匹配类型为 A 记录 匹配备注(Comment)中包含特定关键词
             # record.get('comment', '') 获取备注，防止字段不存在报错
             record_comment = record.get('comment', '')
             if record_comment is None: record_comment = "" # 防止备注为 None
@@ -96,9 +94,9 @@ def send_telegram_message(content):
         print(f"❌ Telegram 通知异常: {e}")
 
 def main():
-    #print("🚀 开始执行 DNS 更新任务 (仅更新备注含 '{CF_DNS_COMMENT}' 的记录)")
+    print("🚀 开始执行 DNS 更新任务 (仅更新备注含 '{CF_DNS_COMMENT}' 的记录)")
     
-    # 获取优选IP (只取前3个)
+    # 获取优选IP
     ip_addresses_str = get_cf_speed_test_ip()
     if not ip_addresses_str:
         print("❌ 获取 IP 失败")
@@ -111,7 +109,7 @@ def main():
     dns_records = get_dns_records(CF_DNS_NAME)
     
     if not dns_records:
-        print(f"❌ 未找到任何域名为 {CF_DNS_NAME} 且备注包含 '{CF_DNS_COMMENT}' 的 A 记录。请先去 Cloudflare 后台给要更新的 3 条记录添加备注。")
+        print(f"❌ 未找到任何域名为 {CF_DNS_NAME} 且备注包含 '{CF_DNS_COMMENT}' 的 A 记录。请先去 Cloudflare 后台给要更新的 3 条记录添加备注")
         return
 
     print(f"📡 匹配到 {len(dns_records)} 条带有 '{CF_DNS_COMMENT}' 备注的记录")
