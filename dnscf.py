@@ -103,7 +103,7 @@ def main():
         return
     
     ip_addresses = ip_addresses_str.split(',')
-    ip_addresses = [ip.strip() for ip in ip_addresses if ip.strip()][:3]
+    ip_addresses = [ip.strip() for ip in ip_addresses if ip.strip()][:4]
     
     # 获取特定备注的 DNS 记录
     dns_records = get_dns_records(CF_DNS_NAME)
